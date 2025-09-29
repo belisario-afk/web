@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://belisario-afk.github.io/web/sitemap.xml

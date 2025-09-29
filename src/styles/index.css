@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fullscreen helpers */
+:root {
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+  --safe-left: env(safe-area-inset-left);
+  --safe-right: env(safe-area-inset-right);
+}
+html, body, #root {
+  height: 100%;
+}
+* { -webkit-tap-highlight-color: transparent; }
+
+/* Large hit areas */
+button, [role="button"] {
+  min-height: 56px;
+  min-width: 56px;
+}
+
+/* Scrollbar minimal */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 8px; }
