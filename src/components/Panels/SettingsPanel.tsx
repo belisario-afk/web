@@ -17,7 +17,17 @@ export default function SettingsPanel() {
   const timeoutMs = useStore(s => s.screensaverTimeoutMs)
   const setScreensaverTimeoutMs = useStore(s => s.setScreensaverTimeoutMs)
 
+  const cycleMs = useStore(s => s.screensaverAutoCycleMs)
+  const setCycleMs = useStore(s => s.setScreensaverAutoCycleMs)
+
+  const blendEnabled = useStore(s => s.screensaverBlendEnabled)
+  const setBlendEnabled = useStore(s => s.setScreensaverBlendEnabled)
+  const blendInterval = useStore(s => s.screensaverBlendIntervalMs)
+  const setBlendInterval = useStore(s => s.setScreensaverBlendIntervalMs)
+
   const [timeoutInput, setTimeoutInput] = useState(Math.round(timeoutMs / 1000))
+  const [cycleInput, setCycleInput] = useState(Math.round(cycleMs / 1000))
+  const [blendInput, setBlendInput] = useState(Math.round(blendInterval / 1000))
 
   return (
     <div className="text-white grid sm-tablet:grid-cols-2 gap-8">
@@ -42,6 +52,7 @@ export default function SettingsPanel() {
         <div className="mt-8">
           <h4 className="font-semibold mb-2 text-white/90">Screensaver</h4>
           <div className="flex items-center gap-3 mb-3">
+            <label className="text-white/60 text-xs w-32">Timeout (s)</label>
             <input
               type="number"
               min={5}
@@ -53,7 +64,39 @@ export default function SettingsPanel() {
                 if (v >= 5) setScreensaverTimeoutMs(v * 1000)
               }}
             />
-            <span className="text-white/60 text-sm">Timeout (seconds)</span>
+          </div>
+          <div className="flex items-center gap-3 mb-3">
+            <label className="text-white/60 text-xs w-32">Mode cycle (s)</label>
+            <input
+              type="number"
+              min={4}
+              className="w-24 px-3 py-2 rounded-md bg-white/10 border border-white/20 text-white"
+              value={cycleInput}
+              onChange={(e) => {
+                const v = parseInt(e.target.value || '0', 10)
+                setCycleInput(v)
+                if (v >= 4) setCycleMs(v * 1000)
+              }}
+            />
+          </div>
+          <div className="flex items-center gap-3 mb-3">
+            <label className="text-white/60 text-xs w-32">Blend interval (s)</label>
+            <input
+              type="number"
+              min={4}
+              className="w-24 px-3 py-2 rounded-md bg-white/10 border border-white/20 text-white"
+              value={blendInput}
+              onChange={(e) => {
+                const v = parseInt(e.target.value || '0', 10)
+                setBlendInput(v)
+                if (v >= 4) setBlendInterval(v * 1000)
+              }}
+              disabled={!blendEnabled}
+            />
+            <div className="flex items-center gap-2">
+              <Toggle checked={blendEnabled} onCheckedChange={setBlendEnabled} label="Blend" />
+              <span className="text-white/60 text-xs">Theme blending</span>
+            </div>
           </div>
           <div className="flex gap-3">
             <button
@@ -61,25 +104,26 @@ export default function SettingsPanel() {
               className="px-4 py-2 rounded-md bg-white/10 hover:bg-white/20 border border-white/25 text-sm"
               disabled={screensaverActive}
             >
-              Start Screensaver
+              Start
             </button>
             <button
               onClick={() => setScreensaverActive(false)}
               className="px-4 py-2 rounded-md bg-white/10 hover:bg-white/20 border border-white/25 text-sm"
               disabled={!screensaverActive}
             >
-              Exit Screensaver
+              Exit
             </button>
           </div>
           <p className="text-white/40 text-xs mt-2">
-            Any touch / key / mouse movement exits automatically. Press ‘S’ to toggle, ‘Esc’ to exit.
+            Tap or keypress exits. Press ‘S’ to toggle. Modes auto‑cycle.
           </p>
         </div>
       </div>
       <div>
         <h3 className="text-2xl font-bold" style={{ color: theme.ui.primary }}>About</h3>
         <div className="mt-4 text-white/70 text-sm">
-          Screensaver adds rotating Opel Bat emblem with procedural bat swarm.
+          Screensaver: Large rotating emblem, music‑reactive bat swarm, themed clock, battery gauge, route map.
+          Theme blending cycles through presets without changing your saved selection.
         </div>
       </div>
     </div>
