@@ -5,12 +5,7 @@ type Opts = { token: string | null }
 function loadSpotifySDK(): Promise<void> {
   if ((window as any)._spotifySDKLoading) return (window as any)._spotifySDKLoading
   if (window.Spotify) return Promise.resolve()
-
-  // Ensure global callback exists (some internal code expects it)
-  if (!window.onSpotifyWebPlaybackSDKReady) {
-    window.onSpotifyWebPlaybackSDKReady = () => {}
-  }
-
+  if (!window.onSpotifyWebPlaybackSDKReady) window.onSpotifyWebPlaybackSDKReady = () => {}
   ;(window as any)._spotifySDKLoading = new Promise<void>((resolve, reject) => {
     const script = document.createElement('script')
     script.src = 'https://sdk.scdn.co/spotify-player.js'
@@ -28,53 +23,38 @@ export function useSpotifyPlayer({ token }: Opts) {
   const [deviceId, setDeviceId] = useState<string | null>(null)
   const [state, setState] = useState<Spotify.PlaybackState | null>(null)
   const [error, setError] = useState<string | null>(null)
-
   const playerRef = useRef<Spotify.Player | null>(null)
   const tokenRef = useRef<string | null>(token)
   tokenRef.current = token
+  const disconnected = useRef(false)
 
+  // Init / teardown
   useEffect(() => {
     let disposed = false
     async function init() {
+      if (!tokenRef.current) return
       try {
-        if (!tokenRef.current) return
         await loadSpotifySDK()
-
-        if (!window.Spotify) {
-          setError('Spotify SDK not available')
-          return
-        }
-
-        if (playerRef.current) {
-          try { playerRef.current.disconnect() } catch {}
-          playerRef.current = null
-        }
-
+        if (!window.Spotify) return setError('SDK unavailable')
         const player = new window.Spotify.Player({
           name: 'Opel Z Dashboard',
-            getOAuthToken: cb => {
-              if (tokenRef.current) cb(tokenRef.current)
-            },
-            volume: 0.6
+          getOAuthToken: cb => tokenRef.current && cb(tokenRef.current),
+          volume: 0.6
         })
-
         player.addListener('ready', ({ device_id }) => {
           if (disposed) return
           setDeviceId(device_id)
           setReady(true)
         })
         player.addListener('not_ready', () => {
-          if (disposed) return
-          setReady(false)
+          if (!disposed) setReady(false)
         })
-        player.addListener('player_state_changed', (s) => {
-          if (disposed) return
-          setState(s)
+        player.addListener('player_state_changed', st => {
+          if (!disposed) setState(st)
         })
         player.addListener('initialization_error', e => setError(e.message))
         player.addListener('authentication_error', e => setError(e.message))
         player.addListener('account_error', e => setError(e.message))
-
         playerRef.current = player
         await player.connect()
       } catch (e: any) {
@@ -84,6 +64,7 @@ export function useSpotifyPlayer({ token }: Opts) {
     init()
     return () => {
       disposed = true
+      disconnected.current = true
       try { playerRef.current?.disconnect() } catch {}
       playerRef.current = null
       setReady(false)
@@ -91,9 +72,9 @@ export function useSpotifyPlayer({ token }: Opts) {
       setDeviceId(null)
       setState(null)
     }
-  }, [token]) // re-init only when token changes to a new string
+  }, [token])
 
-  // Gesture auto-activation
+  // Gesture unlock
   useEffect(() => {
     if (!token) return
     let done = false
@@ -116,22 +97,12 @@ export function useSpotifyPlayer({ token }: Opts) {
   }, [token])
 
   const activateAudio = useCallback(async () => {
-    const player = playerRef.current
-    if (!player) throw new Error('Player not ready')
+    const p = playerRef.current
+    if (!p) throw new Error('Player not ready')
     try {
-      if (typeof player.activateElement === 'function') {
-        const r = player.activateElement()
+      if (typeof p.activateElement === 'function') {
+        const r = p.activateElement()
         if (r instanceof Promise) await r
-      } else {
-        // Fallback: create & resume context
-        const AC = (window as any).AudioContext || (window as any).webkitAudioContext
-        if (AC) {
-          const ctx = new AC()
-          if (ctx.state === 'suspended') {
-            await ctx.resume().catch(() => {})
-          }
-          try { await ctx.close() } catch {}
-        }
       }
       setAudioActivated(true)
     } catch (e) {
@@ -140,37 +111,41 @@ export function useSpotifyPlayer({ token }: Opts) {
     }
   }, [])
 
+  const safeCall = useCallback(async (fn: () => Promise<any>) => {
+    if (disconnected.current) return
+    try { await fn() } catch (e) { /* swallow transient */ }
+  }, [])
+
   const togglePlay = useCallback(async () => {
-    if (!playerRef.current) return
-    try { await playerRef.current.togglePlay() } catch (e) {
-      setAudioActivated(false)
-      throw e
-    }
+    const p = playerRef.current
+    if (!p) return
+    try { await p.togglePlay() } catch { setAudioActivated(false) }
   }, [])
-
-  const next = useCallback(async () => { await playerRef.current?.nextTrack() }, [])
-  const previous = useCallback(async () => { await playerRef.current?.previousTrack() }, [])
-
+  const next = useCallback(async () => { await safeCall(() => playerRef.current!.nextTrack()) }, [safeCall])
+  const previous = useCallback(async () => { await safeCall(() => playerRef.current!.previousTrack()) }, [safeCall])
   const setVolume = useCallback(async (v: number) => {
-    if (!playerRef.current) return
-    await playerRef.current.setVolume(Math.max(0, Math.min(1, v)))
-  }, [])
+    const p = playerRef.current
+    if (!p) return
+    await safeCall(() => p.setVolume(Math.max(0, Math.min(1, v))))
+  }, [safeCall])
   const getVolume = useCallback(async () => {
-    if (!playerRef.current) return 0.6
-    return playerRef.current.getVolume()
+    const p = playerRef.current
+    if (!p) return 0.6
+    try { return await p.getVolume() } catch { return 0.6 }
   }, [])
 
   const transferPlayback = useCallback(async (opts?: { play?: boolean }) => {
     if (!tokenRef.current || !deviceId) return
-    const res = await fetch('https://api.spotify.com/v1/me/player', {
+    await fetch('https://api.spotify.com/v1/me/player', {
       method: 'PUT',
       headers: {
         Authorization: `Bearer ${tokenRef.current}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({ device_ids: [deviceId], play: !!opts?.play })
-    })
-    if (!res.ok && res.status !== 204) throw new Error(`Transfer failed ${res.status}`)
+    }).then(r => {
+      if (!r.ok && r.status !== 204) throw new Error(`Transfer ${r.status}`)
+    }).catch(() => {})
   }, [deviceId])
 
   return useMemo(() => ({
