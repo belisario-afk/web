@@ -1,6 +1,6 @@
-import React, { Suspense, useMemo, useRef, useState } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { Stars, Text } from '@react-three/drei'
+import React, { Suspense, useState } from 'react'
+import { Canvas } from '@react-three/fiber'
+import { Stars } from '@react-three/drei'
 import { Effects } from '../three/Effects'
 import { NeonTrails } from '../three/NeonTrails'
 import { LensFlares } from '../three/LensFlares'
@@ -9,81 +9,42 @@ import { Nebula } from '../three/Nebula'
 import { WarpTunnel } from '../three/WarpTunnel'
 import { ProceduralSky } from '../three/ProceduralSky'
 import { useStore } from '../state/store'
-import * as THREE from 'three'
 import { normalizeSpeedForVisuals } from '../utils/gps'
-import { useHologramMaterial } from '../three/HologramMaterial'
 import { useAdaptivePerformance } from '../hooks/useAdaptivePerformance'
+import { OpelZLogo } from './visual/OpelZLogo'
 
-function PrimaryZ({ degraded }: { degraded: boolean }) {
-  const theme = useStore(s => s.theme)
-  const speed = useStore(s => s.speed)
-  const group = useRef<THREE.Group>(null)
-  const intensity = useMemo(() => normalizeSpeedForVisuals(speed), [speed])
-
-  const holo =
-    theme.visuals.primaryShader === 'hologram'
-      ? useHologramMaterial(theme.ui.primary, theme.visuals.hologramScanColor || theme.ui.accent)
-      : null
-
-  const chrome = useMemo(() => {
-    if (theme.visuals.primaryShader !== 'chrome') return null
-    return new THREE.MeshStandardMaterial({
-      color: theme.ui.primary,
-      metalness: 1,
-      roughness: 0.28,
-      emissive: new THREE.Color(theme.ui.glow).multiplyScalar(0.12)
-    })
-  }, [theme])
-
-  const wire = useMemo(() => {
-    if (theme.visuals.primaryShader !== 'wire') return null
-    return new THREE.MeshBasicMaterial({ color: theme.ui.primary, wireframe: true })
-  }, [theme])
-
-  useFrame((_, dt) => {
-    if (group.current) {
-      group.current.rotation.y += dt * (0.22 + intensity * 0.6)
-      group.current.rotation.x = Math.sin(performance.now() * 0.00018) * 0.16 * (0.4 + intensity)
-    }
-  })
-
-  const mat = holo || chrome || wire
-  return (
-    <group ref={group}>
-      <Text fontSize={degraded ? 2.9 : 3.4} position={[0, 0, 0]}>
-        Z
-        {mat && <primitive attach="material" object={mat} />}
-      </Text>
-    </group>
-  )
-}
-
-function SceneContent() {
+function Scene() {
   const theme = useStore(s => s.theme)
   const speed = useStore(s => s.speed)
   const intensity = normalizeSpeedForVisuals(speed)
   const { degraded } = useAdaptivePerformance()
-  const particleScale = degraded ? 0.5 : 1
+  const particleScale = degraded ? 0.45 : 1
+
+  const hologram = theme.visuals.primaryShader === 'hologram'
 
   return (
     <>
       <color attach="background" args={[theme.ui.bg]} />
-      <ProceduralSky top={theme.ui.bg} middle={theme.ui.accent} bottom={theme.ui.bg} sunColor={theme.ui.primary} />
-
+      <ProceduralSky
+        top={theme.ui.bg}
+        middle={theme.ui.accent}
+        bottom={theme.ui.bg}
+        sunColor={theme.ui.primary}
+      />
       {theme.visuals.background === 'stars' && (
         <Stars
-          radius={80}
+          radius={75}
           depth={55}
-          count={Math.round((theme.visuals.particles || 3000) * particleScale * 0.55)}
+          count={Math.round((theme.visuals.particles || 3000) * particleScale * 0.5)}
           factor={2}
           fade
-          speed={0.25 + intensity * 0.55}
+          speed={0.25 + intensity * 0.5}
         />
       )}
       {theme.visuals.background === 'grid' && (
         <BackgroundGrid
           color={(theme.visuals as any).gridColor || theme.ui.primary}
-          opacity={(theme.visuals as any).gridOpacity ?? 0.12}
+          opacity={(theme.visuals as any).gridOpacity ?? 0.1}
         />
       )}
       {theme.visuals.background === 'nebula' && (
@@ -91,20 +52,25 @@ function SceneContent() {
           <Nebula colors={theme.visuals.nebulaColors} />
         </Suspense>
       )}
-      {theme.visuals.background === 'warp' && <WarpTunnel color={theme.visuals.warpColor || theme.ui.accent} />}
+      {theme.visuals.background === 'warp' && (
+        <WarpTunnel color={theme.visuals.warpColor || theme.ui.accent} />
+      )}
 
       <Suspense fallback={null}>
-        {theme.visuals.trails && !degraded && <NeonTrails count={20} color={theme.ui.glow} />}
-        {theme.visuals.lensflare && !degraded && <LensFlares count={120} color={theme.ui.accent} />}
+        {theme.visuals.trails && !degraded && (
+          <NeonTrails count={20} color={theme.ui.glow} />
+        )}
+        {theme.visuals.lensflare && !degraded && (
+          <LensFlares count={110} color={theme.ui.accent} />
+        )}
       </Suspense>
 
-      <PrimaryZ degraded={degraded} />
+      <OpelZLogo hologram={hologram} rotationSpeed={0.2} />
 
-      <ambientLight intensity={0.32 + intensity * 0.45} />
-      <pointLight position={[10, 10, 10]} intensity={1.1} color={theme.ui.accent} />
-      <pointLight position={[-10, -10, -6]} intensity={0.35} color={theme.ui.glow} />
-
-      <Effects bloom={degraded ? theme.visuals.bloom * 0.55 : theme.visuals.bloom} />
+      <ambientLight intensity={0.3 + intensity * 0.4} />
+      <pointLight position={[10, 10, 10]} intensity={1} color={theme.ui.accent} />
+      <pointLight position={[-10, -10, -6]} intensity={0.3} color={theme.ui.glow} />
+      <Effects bloom={degraded ? theme.visuals.bloom * 0.5 : theme.visuals.bloom} />
     </>
   )
 }
@@ -118,7 +84,7 @@ function CanvasWrapper() {
         dpr={[1, 2]}
         gl={{
           antialias: true,
-            powerPreference: 'high-performance',
+          powerPreference: 'high-performance',
           failIfMajorPerformanceCaveat: false
         }}
         camera={{ position: [0, 0, 15], fov: 60 }}
@@ -135,7 +101,7 @@ function CanvasWrapper() {
           )
         }}
       >
-        {!lost && <SceneContent />}
+        {!lost && <Scene />}
       </Canvas>
       {lost && (
         <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/85 text-white gap-5">

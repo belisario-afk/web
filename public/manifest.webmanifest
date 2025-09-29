@@ -2,22 +2,14 @@
   "name": "Opel Z",
   "short_name": "Opel Z",
   "description": "3D Spotify Dashboard for Samsung Galaxy Tab SMT77U",
-  "start_url": "/web/",
+  "start_url": "/web/?v=2",
   "scope": "/web/",
   "display": "fullscreen",
   "background_color": "#0A0F14",
   "theme_color": "#0A0F14",
   "orientation": "landscape",
   "icons": [
-    {
-      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAACXBIWXMAAAsSAAALEgHS3X78AAABx0lEQVR4nO3c0W3CMBAF0aYBNAHqAB0gG8AGdIAm0AHoAB1AM3Rf6ol0H12r9u6u15NytkWn5/Px2qKqqqqqqqqqqausY1nP2fK8+z4r4cFf78fLPeXl9cMVJv51n/sd81eK+vHLv3nbfc/73MD8fq35v9Y12+G70XH7YHjL+vePzSY0v8afndw13fJ5YcJf4po3uOXXn/8H2n9bt9+fXiw+txW+2J/5eK90+3v9ttf1qlvO4cE3+7czGe3S8Tvinvej/OKaN7jl15//B9p/W7ffn14sPrcVXKfCHvO7z5n1nvM7b5f7tl51xTpyznt0vE74p73o/zimbxwdO3du3du3fo1fQuH7SvvxOP7ZBVbbLzcLnw6nH49Hr5cLqdDoVCIYRhGGI3xXZ0Oh0MgwDA0Go1gMBhaLheVSoWYRjGezye1Wg2Hw+Hw5nVapVqtVqtVqvXHXNlGYYhhGEYRhj9w0Psb7xKqlSpUqVK1euh9Bv5BhGEEZhmH8AtuHhIFTL2YMAAAAASUVORK5CYII=",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAACXBIWXMAAAsSAAALEgHS3X78AAAC30lEQVR4nO3SQQ2DMBBA0dABOwAH6AAdoAN0gA7QAboADpKwwdG0aF1CCkRzLpv+7r2nAAAAAAAAAAD+uJ3v77d//fXH77vby+eDj09fch38cH7oeHt49OZr5y4ev3J8eG57+fhxYfvXw4O351e/7eHZ79fRgfv3w4O341nPX3o89fTjYPX74cHP63uPTk4OP3p8cHL39+Nvhwevnw4OPz18ODu8b+H8MDh+/v3l9/Dy+f3A4efvvn9383My5XAO/DgcPn9wODn89fDg7/Og9+HD1M1lHr6eHHy8PXw4OPz18ODv86D34cPT3DZx6+nhx8vD18ODj89fDg7/O4XPHnXs4PPbweHLw9fDg4/PXw4O/zsPfhw9f7t/w2n6MHX64HDz5/fDg4/PXw4O/zsPfhw9f7s8No+lB1/uxw8+f3w4OPz18ODv87D34cPWr75z++BgAAAAAAAAAAwFX7AF1tFUmVwA1BAAAAAElFTkSuQmCC",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "icons/icon-192.png?v=2", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png?v=2", "sizes": "512x512", "type": "image/png" }
   ]
 }
