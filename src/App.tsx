@@ -9,12 +9,17 @@ import { useStore } from './state/store'
 import { presets } from './state/themes'
 import { useDeviceInfo } from './hooks/useDeviceInfo'
 import { SpotifyProvider } from './providers/SpotifyProvider'
+import { useInactivityScreensaver } from './hooks/useInactivityScreensaver'
+import { ScreensaverOverlay } from './components/screensaver/ScreensaverOverlay'
 
 export default function App() {
   const theme = useStore(s => s.theme)
   const panel = useStore(s => s.panel)
   const carDock = useStore(s => s.carDock)
   const { isSMT77U, landscape } = useDeviceInfo()
+  const screensaverActive = useStore(s => s.screensaverActive)
+
+  useInactivityScreensaver()
 
   useEffect(() => {
     document.body.style.background = theme.ui.bg
@@ -40,51 +45,64 @@ export default function App() {
   return (
     <SpotifyProvider>
       <div className="relative h-full w-full overflow-hidden">
-        <Dashboard3D />
-        <header className="absolute top-[calc(16px+var(--safe-top))] left-0 right-0 z-20">
-          <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div
-                className="w-12 h-12 rounded-2xl border border-white/10 bg-white/10 flex items-center justify-center text-2xl font-black"
-                style={{ color: theme.ui.primary }}
-                aria-label="Opel Z logo"
-              >
-                Z
-              </div>
-              <div className="text-white">
-                <div className="text-xl font-bold" style={{ color: theme.ui.primary }}>Opel Z</div>
-                <div className="text-white/60 text-sm">
-                  {panelTitle} · {isSMT77U ? 'Samsung Galaxy Tab SMT77U' : 'Tablet mode'}
+        {/* Main 3D + UI fades when screensaver active */}
+        <div
+          className="absolute inset-0"
+          style={{
+            opacity: screensaverActive ? 0 : 1,
+            transition: 'opacity 0.5s ease',
+            pointerEvents: screensaverActive ? 'none' : 'auto'
+          }}
+        >
+          <Dashboard3D />
+          <header className="absolute top-[calc(16px+var(--safe-top))] left-0 right-0 z-20">
+            <div className="max-w-[1400px] mx-auto px-6 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div
+                  className="w-12 h-12 rounded-2xl border border-white/10 bg-white/10 flex items-center justify-center text-2xl font-black"
+                  style={{ color: theme.ui.primary }}
+                  aria-label="Opel Z logo"
+                >
+                  Z
+                </div>
+                <div className="text-white">
+                  <div className="text-xl font-bold" style={{ color: theme.ui.primary }}>Opel Z</div>
+                  <div className="text-white/60 text-sm">
+                    {panelTitle} · {isSMT77U ? 'Samsung Galaxy Tab SMT77U' : 'Tablet mode'}
+                  </div>
                 </div>
               </div>
+              <nav className="flex gap-3">
+                {(['now', 'geo', 'themes', 'settings'] as const).map(p => (
+                  <button
+                    key={p}
+                    onClick={() => useStore.getState().setPanel(p)}
+                    className={`px-4 py-3 rounded-xl border text-white/80 hover:bg-white/10 ${
+                      panel === p ? 'border-opel-neon bg-white/10' : 'border-white/20'
+                    }`}
+                  >
+                    {p === 'now' ? 'Now' : p.charAt(0).toUpperCase() + p.slice(1)}
+                  </button>
+                ))}
+              </nav>
             </div>
-            <nav className="flex gap-3">
-              {(['now', 'geo', 'themes', 'settings'] as const).map(p => (
-                <button
-                  key={p}
-                  onClick={() => useStore.getState().setPanel(p)}
-                  className={`px-4 py-3 rounded-xl border text-white/80 hover:bg-white/10 ${
-                    panel === p ? 'border-opel-neon bg-white/10' : 'border-white/20'
-                  }`}
-                >
-                  {p === 'now' ? 'Now' : p.charAt(0).toUpperCase() + p.slice(1)}
-                </button>
-              ))}
-            </nav>
-          </div>
-        </header>
+          </header>
 
-        <main className={`relative h-full ${carDock ? 'cursor-none' : ''}`}>
-          <GestureLayer />
-          <VolumeGestureLayer />
-          <PanelContainer />
-          <AudioUnlockOverlay />
-          <VolumeOverlay />
-        </main>
+          <main className={`relative h-full ${carDock ? 'cursor-none' : ''}`}>
+            <GestureLayer />
+            <VolumeGestureLayer />
+            <PanelContainer />
+            <AudioUnlockOverlay />
+            <VolumeOverlay />
+          </main>
 
-        <footer className="absolute bottom-[calc(8px+var(--safe-bottom))] left-0 right-0 z-20 text-center text-white/40 text-sm">
-          Opel Z · Themes: {presets.map(p => p.name).join(' · ')}
-        </footer>
+          <footer className="absolute bottom-[calc(8px+var(--safe-bottom))] left-0 right-0 z-20 text-center text-white/40 text-sm">
+            Opel Z · Themes: {presets.map(p => p.name).join(' · ')}
+          </footer>
+        </div>
+
+        {/* Screensaver overlay (independent) */}
+        <ScreensaverOverlay />
       </div>
     </SpotifyProvider>
   )

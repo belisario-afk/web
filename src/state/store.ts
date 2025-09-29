@@ -1,44 +1,8 @@
 import { create } from 'zustand'
+import { presets } from './themes'
 
 export type Panel = 'now' | 'geo' | 'themes' | 'settings'
-
-export type ThemeVisualBackground =
-  | 'stars'
-  | 'grid'
-  | 'nebula'
-  | 'warp'
-
-export type PrimaryShader = 'chrome' | 'hologram' | 'wire'
-
-export type ThemePreset = {
-  id: string
-  name: string
-  description: string
-  ui: {
-    primary: string
-    accent: string
-    glow: string
-    bg: string
-  }
-  visuals: {
-    particles: number
-    bloom: number
-    trails: boolean
-    lensflare: boolean
-    background: ThemeVisualBackground
-    primaryShader: PrimaryShader
-    environmentPreset?: string
-    gridColor?: string
-    nebulaColors?: string[]
-    warpColor?: string
-    hologramScanColor?: string
-  }
-  dsp: {
-    ambienceGain: number
-    lowpassHz: number
-  }
-  tags?: string[]
-}
+export type ThemePreset = typeof presets[number]
 
 type State = {
   panel: Panel
@@ -59,11 +23,17 @@ type State = {
   setVolume: (v: number) => void
   lastVolumeChangeAt: number
   markVolumeChanged: () => void
+
+  // Screensaver
+  screensaverActive: boolean
+  setScreensaverActive: (v: boolean) => void
+  screensaverTimeoutMs: number
+  setScreensaverTimeoutMs: (ms: number) => void
+  lastInteractionAt: number
+  markInteraction: () => void
 }
 
-import { presets } from './themes'
-
-export const useStore = create<State>((set) => ({
+export const useStore = create<State>((set, get) => ({
   panel: 'now',
   setPanel: (p) => set({ panel: p }),
   theme: presets[0],
@@ -78,8 +48,27 @@ export const useStore = create<State>((set) => ({
   setBrightnessSuggestion: (v) => set({ brightnessSuggestion: v }),
   dspEnabled: false,
   setDspEnabled: (v) => set({ dspEnabled: v }),
+
   volume: 0.6,
   setVolume: (v) => set({ volume: Math.max(0, Math.min(1, v)) }),
   lastVolumeChangeAt: 0,
-  markVolumeChanged: () => set({ lastVolumeChangeAt: Date.now() })
+  markVolumeChanged: () => set({ lastVolumeChangeAt: Date.now() }),
+
+  // Screensaver defaults
+  screensaverActive: false,
+  setScreensaverActive: (v) => {
+    // when leaving screensaver, mark interaction to restart timer
+    if (!v) set({ lastInteractionAt: Date.now() })
+    set({ screensaverActive: v })
+  },
+  screensaverTimeoutMs: 60000, // 60s
+  setScreensaverTimeoutMs: (ms) => set({ screensaverTimeoutMs: Math.max(5000, ms) }),
+  lastInteractionAt: Date.now(),
+  markInteraction: () => {
+    if (get().screensaverActive) {
+      // ignore; exit handled externally
+      return
+    }
+    set({ lastInteractionAt: Date.now() })
+  }
 }))

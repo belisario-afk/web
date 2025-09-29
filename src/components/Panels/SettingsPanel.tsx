@@ -1,82 +1,85 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
+import { useStore } from '../../state/store'
 import { Toggle } from '../UI/Toggle'
 import { FullscreenButton } from '../UI/FullscreenButton'
-import { useStore } from '../../state/store'
-import { useBattery } from '../../hooks/useBattery'
-import { useWakeLock } from '../../hooks/useWakeLock'
-import { useSpeech } from '../../hooks/useSpeech'
-import { usePWAInstall } from '../../hooks/usePWAInstall'
 
 export default function SettingsPanel() {
   const fullscreenAuto = useStore(s => s.fullscreenAuto)
   const setFullscreenAuto = useStore(s => s.setFullscreenAuto)
   const carDock = useStore(s => s.carDock)
   const setCarDock = useStore(s => s.setCarDock)
-  const theme = useStore(s => s.theme)
-  const brightnessSuggestion = useStore(s => s.brightnessSuggestion)
   const dspEnabled = useStore(s => s.dspEnabled)
   const setDspEnabled = useStore(s => s.setDspEnabled)
-  const { level } = useBattery()
-  const { active: wakeActive, fallbackActive } = useWakeLock()
-  const { speak, enabled: speechEnabled } = useSpeech()
-  const [announced, setAnnounced] = useState(false)
-  const { supported: pwaSupported, installed: pwaInstalled, choice, promptInstall } = usePWAInstall()
+  const theme = useStore(s => s.theme)
 
-  useEffect(() => {
-    if (carDock && speechEnabled && !announced) {
-      speak('Car-dock mode enabled')
-      setAnnounced(true)
-    }
-    if (!carDock) setAnnounced(false)
-  }, [carDock, speak, speechEnabled, announced])
+  const screensaverActive = useStore(s => s.screensaverActive)
+  const setScreensaverActive = useStore(s => s.setScreensaverActive)
+  const timeoutMs = useStore(s => s.screensaverTimeoutMs)
+  const setScreensaverTimeoutMs = useStore(s => s.setScreensaverTimeoutMs)
+
+  const [timeoutInput, setTimeoutInput] = useState(Math.round(timeoutMs / 1000))
 
   return (
     <div className="text-white grid sm-tablet:grid-cols-2 gap-8">
       <div>
-        <h3 className="text-2xl font-bold" style={{ color: theme.ui.primary }}>Display & System</h3>
+        <h3 className="text-2xl font-bold" style={{ color: theme.ui.primary }}>System & Display</h3>
         <div className="mt-4 flex items-center gap-4">
           <FullscreenButton />
           <div className="flex items-center gap-3">
             <Toggle checked={fullscreenAuto} onCheckedChange={setFullscreenAuto} label="Auto fullscreen" />
-            <span className="text-white/80">Auto fullscreen</span>
+            <span className="text-white/80 text-sm">Auto fullscreen</span>
           </div>
         </div>
         <div className="mt-4 flex items-center gap-3">
-          <Toggle checked={carDock} onCheckedChange={setCarDock} label="Car-dock mode" />
-          <span className="text-white/80">Car-dock mode (immersive UI)</span>
+          <Toggle checked={carDock} onCheckedChange={setCarDock} label="Car dock" />
+          <span className="text-white/80 text-sm">Car-dock mode</span>
         </div>
         <div className="mt-4 flex items-center gap-3">
-          <Toggle checked={dspEnabled} onCheckedChange={setDspEnabled} label="Ambient engine" />
-          <span className="text-white/80">Ambient engine (subtle background texture)</span>
+          <Toggle checked={dspEnabled} onCheckedChange={setDspEnabled} label="Ambience" />
+          <span className="text-white/80 text-sm">Ambient engine</span>
         </div>
 
-        <div className="mt-4 flex items-center gap-3">
-          <button
-            className="px-4 py-3 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20"
-            onClick={promptInstall}
-            disabled={!pwaSupported || pwaInstalled}
-            title={pwaInstalled ? 'Already installed' : pwaSupported ? 'Install Opel Z' : 'Install not available yet'}
-          >
-            {pwaInstalled ? 'Installed' : pwaSupported ? 'Install app' : 'Install not available'}
-          </button>
-          {choice && <span className="text-white/60 text-sm">User choice: {choice}</span>}
-        </div>
-
-        <div className="mt-4 text-white/70">
-          Wake lock: {wakeActive ? 'Active' : 'Attempting'} {fallbackActive ? '· Audio fallback active' : ''}
-          · Battery: {level != null ? Math.round(level * 100) + '%' : 'n/a'}
-        </div>
-        <div className="mt-2 text-white/60">
-          Brightness suggestion: <strong>{brightnessSuggestion}</strong>
+        <div className="mt-8">
+          <h4 className="font-semibold mb-2 text-white/90">Screensaver</h4>
+          <div className="flex items-center gap-3 mb-3">
+            <input
+              type="number"
+              min={5}
+              className="w-24 px-3 py-2 rounded-md bg-white/10 border border-white/20 text-white"
+              value={timeoutInput}
+              onChange={(e) => {
+                const v = parseInt(e.target.value || '0', 10)
+                setTimeoutInput(v)
+                if (v >= 5) setScreensaverTimeoutMs(v * 1000)
+              }}
+            />
+            <span className="text-white/60 text-sm">Timeout (seconds)</span>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setScreensaverActive(true)}
+              className="px-4 py-2 rounded-md bg-white/10 hover:bg-white/20 border border-white/25 text-sm"
+              disabled={screensaverActive}
+            >
+              Start Screensaver
+            </button>
+            <button
+              onClick={() => setScreensaverActive(false)}
+              className="px-4 py-2 rounded-md bg-white/10 hover:bg-white/20 border border-white/25 text-sm"
+              disabled={!screensaverActive}
+            >
+              Exit Screensaver
+            </button>
+          </div>
+          <p className="text-white/40 text-xs mt-2">
+            Any touch / key / mouse movement exits automatically. Press ‘S’ to toggle, ‘Esc’ to exit.
+          </p>
         </div>
       </div>
       <div>
         <h3 className="text-2xl font-bold" style={{ color: theme.ui.primary }}>About</h3>
-        <div className="mt-4 text-white/70">
-          Opel Z · Optimized for Samsung Galaxy Tab SMT77U. Swipe left/right to switch panels, swipe up to cycle themes.
-        </div>
-        <div className="mt-2 text-white/60">
-          Speech: {speechEnabled ? 'Enabled' : 'Unavailable'}
+        <div className="mt-4 text-white/70 text-sm">
+          Screensaver adds rotating Opel Bat emblem with procedural bat swarm.
         </div>
       </div>
     </div>
