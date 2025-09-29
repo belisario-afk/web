@@ -2,21 +2,16 @@ import React from 'react'
 import { useStore } from '../../state/store'
 import { presets } from '../../state/themes'
 
-const badgeClass =
-  'px-2 py-1 rounded-full text-[10px] uppercase tracking-wide font-semibold bg-white/10 text-white/70'
+const badgeClass = 'px-2 py-1 rounded-full text-[10px] uppercase tracking-wide font-semibold bg-white/10 text-white/70'
 
 export default function ThemesPanel() {
   const theme = useStore(s => s.theme)
   const setTheme = useStore(s => s.setTheme)
-
   return (
     <div className="text-white">
-      <h3 className="text-2xl font-bold mb-2" style={{ color: theme.ui.primary }}>
-        Themes & Visual Presets
-      </h3>
+      <h3 className="text-2xl font-bold mb-2" style={{ color: theme.ui.primary }}>Themes</h3>
       <p className="text-white/60 text-sm mb-6">
-        Presets modify shaders, particle density, bloom, motion systems and ambient feel. Selecting a
-        high‑intensity theme may reduce battery life.
+        Optimized presets (HDR removed for stability). Performance auto-scales if frame time rises.
       </p>
       <div className="grid sm-tablet:grid-cols-2 lg:grid-cols-3 gap-5">
         {presets.map(p => {
@@ -43,9 +38,7 @@ export default function ThemesPanel() {
               <div className="flex flex-wrap gap-1">
                 <span className={badgeClass}>{p.visuals.background}</span>
                 <span className={badgeClass}>{p.visuals.primaryShader}</span>
-                {p.tags?.slice(0, 2).map(t => (
-                  <span key={t} className={badgeClass}>{t}</span>
-                ))}
+                {p.tags?.slice(0, 2).map(t => <span key={t} className={badgeClass}>{t}</span>)}
                 {p.visuals.trails && <span className={badgeClass}>trails</span>}
                 {p.visuals.lensflare && <span className={badgeClass}>flare</span>}
               </div>

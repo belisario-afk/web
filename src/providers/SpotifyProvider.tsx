@@ -45,105 +45,136 @@ export const SpotifyProvider: React.FC<React.PropsWithChildren> = ({ children })
     getVolume
   } = useSpotifyPlayer({ token: accessToken })
 
-  // Debounced transfer logic with retry
-  const transferredOnce = useRef(false)
-  const retryCount = useRef(0)
-  const transferTimer = useRef<number | null>(null)
-  const [pendingTransfer, setPendingTransfer] = useState(false)
+  // Serialized / debounced device transfer
+  const transferred = useRef(false)
+  const transferInFlight = useRef(false)
+  const retryAttempt = useRef(0)
+  const cancelRef = useRef(false)
+
+  // Poll devices before transfer to avoid early 404 / 403 storms
+  const fetchDevices = async () => {
+    if (!accessToken) return []
+    const r = await fetch('https://api.spotify.com/v1/me/player/devices', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    })
+    if (!r.ok) return []
+    const j = await r.json()
+    return j.devices || []
+  }
 
   useEffect(() => {
-    if (!accessToken || !playerReady || !deviceId) return
-    if (transferredOnce.current) return
-    if (pendingTransfer) return
-    setPendingTransfer(true)
+    if (!accessToken || !playerReady || transferred.current || transferInFlight.current) return
+    let mounted = true
+    transferInFlight.current = true
+    cancelRef.current = false
 
     const attempt = async () => {
+      if (cancelRef.current) return
+      const devices = await fetchDevices()
+      const hasDevice = devices.some((d: any) => d.id === deviceId)
+      if (!hasDevice) {
+        // Give the SDK time to register; backoff
+        retryAttempt.current += 1
+        if (retryAttempt.current > 6) {
+          transferInFlight.current = false
+          return
+        }
+        const delay = 400 * Math.pow(1.7, retryAttempt.current)
+        setTimeout(attempt, delay)
+        return
+      }
       try {
         await transferPlayback({ play: false })
-        transferredOnce.current = true
+        transferred.current = true
       } catch {
-        retryCount.current += 1
-        if (retryCount.current < 5) {
-          const delay = 400 * Math.pow(1.6, retryCount.current)
-          transferTimer.current = window.setTimeout(attempt, delay)
+        retryAttempt.current += 1
+        if (retryAttempt.current <= 6) {
+          const delay = 600 * Math.pow(1.5, retryAttempt.current)
+          setTimeout(attempt, delay)
         }
       } finally {
-        if (transferredOnce.current || retryCount.current >= 5) setPendingTransfer(false)
+        if (mounted) transferInFlight.current = false
       }
     }
     attempt()
+
     return () => {
-      if (transferTimer.current) clearTimeout(transferTimer.current)
+      mounted = false
+      cancelRef.current = true
     }
-  }, [accessToken, playerReady, deviceId, transferPlayback, pendingTransfer])
+  }, [accessToken, playerReady, deviceId, transferPlayback])
 
   async function playTrack(uri: string) {
     if (!accessToken || !deviceId) return
     const endpoint = `https://api.spotify.com/v1/me/player/play?device_id=${encodeURIComponent(deviceId)}`
     const body = JSON.stringify({ uris: [uri] })
-    const res = await fetch(endpoint, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body
-    })
-    if (!res.ok && res.status !== 204) {
-      await transferPlayback({ play: false }).catch(() => {})
-      const retry = await fetch(endpoint, {
+    const run = async () =>
+      fetch(endpoint, {
         method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body
       })
-      if (!retry.ok && retry.status !== 204) {
-        throw new Error(`Play failed (${retry.status})`)
-      }
+
+    let r = await run()
+    if (!r.ok && r.status !== 204) {
+      await transferPlayback({ play: false }).catch(() => {})
+      r = await run()
+      if (!r.ok && r.status !== 204) throw new Error(`Play failed (${r.status})`)
     }
   }
 
   async function queueTrack(uri: string) {
     if (!accessToken || !deviceId) return
     const endpoint = `https://api.spotify.com/v1/me/player/queue?uri=${encodeURIComponent(uri)}&device_id=${encodeURIComponent(deviceId)}`
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}` }
-    })
-    if (!res.ok) {
+    let r = await fetch(endpoint, { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` } })
+    if (!r.ok) {
       await transferPlayback({ play: false }).catch(() => {})
-      await fetch(endpoint, { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` } })
+      r = await fetch(endpoint, { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` } })
     }
   }
 
-  const value: Ctx = useMemo(() => ({
-    authReady,
-    authError,
-    authorize,
-    logout,
-    token: accessToken,
-    playerReady,
-    playerError,
-    state,
-    deviceId,
-    audioActivated,
-    activateAudio,
-    togglePlay,
-    next,
-    previous,
-    setVolume,
-    getVolume,
-    transferPlayback,
-    playTrack,
-    queueTrack
-  }), [
-    authReady, authError, authorize, logout, accessToken,
-    playerReady, playerError, state, deviceId,
-    audioActivated, activateAudio, togglePlay, next, previous,
-    setVolume, getVolume, transferPlayback
-  ])
+  const value: Ctx = useMemo(
+    () => ({
+      authReady,
+      authError,
+      authorize,
+      logout,
+      token: accessToken,
+      playerReady,
+      playerError,
+      state,
+      deviceId,
+      audioActivated,
+      activateAudio,
+      togglePlay,
+      next,
+      previous,
+      setVolume,
+      getVolume,
+      transferPlayback,
+      playTrack,
+      queueTrack
+    }),
+    [
+      authReady,
+      authError,
+      authorize,
+      logout,
+      accessToken,
+      playerReady,
+      playerError,
+      state,
+      deviceId,
+      audioActivated,
+      activateAudio,
+      togglePlay,
+      next,
+      previous,
+      setVolume,
+      getVolume,
+      transferPlayback
+    ]
+  )
 
   return <SpotifyCtx.Provider value={value}>{children}</SpotifyCtx.Provider>
 }
