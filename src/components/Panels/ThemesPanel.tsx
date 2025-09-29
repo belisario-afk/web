@@ -15,7 +15,8 @@ export default function ThemesPanel() {
         Themes & Visual Presets
       </h3>
       <p className="text-white/60 text-sm mb-6">
-        Each preset changes shaders, background systems, particle counts, bloom, and UI palette.
+        Presets modify shaders, particle density, bloom, motion systems and ambient feel. Selecting a
+        high‑intensity theme may reduce battery life.
       </p>
       <div className="grid sm-tablet:grid-cols-2 lg:grid-cols-3 gap-5">
         {presets.map(p => {
@@ -26,7 +27,7 @@ export default function ThemesPanel() {
               onClick={() => setTheme(p)}
               className={`relative flex flex-col gap-3 p-4 rounded-2xl text-left bg-white/5 border transition ${
                 active
-                  ? 'border-opel-neon shadow-[0_0_0_2px_rgba(0,229,255,0.4)]'
+                  ? 'border-opel-neon shadow-[0_0_0_2px_rgba(0,229,255,0.35)]'
                   : 'border-white/10 hover:border-white/25 hover:bg-white/10'
               }`}
             >
@@ -43,9 +44,7 @@ export default function ThemesPanel() {
                 <span className={badgeClass}>{p.visuals.background}</span>
                 <span className={badgeClass}>{p.visuals.primaryShader}</span>
                 {p.tags?.slice(0, 2).map(t => (
-                  <span key={t} className={badgeClass}>
-                    {t}
-                  </span>
+                  <span key={t} className={badgeClass}>{t}</span>
                 ))}
                 {p.visuals.trails && <span className={badgeClass}>trails</span>}
                 {p.visuals.lensflare && <span className={badgeClass}>flare</span>}

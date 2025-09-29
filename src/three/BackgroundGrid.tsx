@@ -1,15 +1,18 @@
 import React, { useMemo } from 'react'
 import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
-import { useStore } from '../state/store'
 
-export function BackgroundGrid({ color = '#FFFFFF22' }: { color?: string }) {
-  const lines = useMemo(() => {
-    const group = new THREE.Group()
-    const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.5 })
+interface Props {
+  color?: string
+  opacity?: number
+}
+export function BackgroundGrid({ color = '#ffffff', opacity = 0.15 }: Props) {
+  const group = useMemo(() => {
+    const g = new THREE.Group()
     const size = 100
     const step = 2
     for (let i = -size; i <= size; i += step) {
+      const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity })
       const geoH = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(-size, -5, i),
         new THREE.Vector3(size, -5, i)
@@ -18,20 +21,21 @@ export function BackgroundGrid({ color = '#FFFFFF22' }: { color?: string }) {
         new THREE.Vector3(i, -5, -size),
         new THREE.Vector3(i, -5, size)
       ])
-      group.add(new THREE.Line(geoH, material))
-      group.add(new THREE.Line(geoV, material))
+      g.add(new THREE.Line(geoH, mat))
+      g.add(new THREE.Line(geoV, mat))
     }
-    return group
-  }, [color])
+    return g
+  }, [color, opacity])
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime
-    lines.children.forEach((child, idx) => {
+    group.children.forEach((child, idx) => {
       const line = child as THREE.Line
-      const baseOpacity = 0.25 + 0.25 * Math.sin(t * 0.5 + idx * 0.15)
-      ;(line.material as THREE.LineBasicMaterial).opacity = baseOpacity
+      const base = opacity * 0.6
+      ;(line.material as THREE.LineBasicMaterial).opacity =
+        base + base * 0.4 * Math.sin(t * 0.4 + idx * 0.1)
     })
   })
 
-  return <primitive object={lines} />
+  return <primitive object={group} />
 }

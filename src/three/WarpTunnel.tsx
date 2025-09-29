@@ -9,8 +9,8 @@ export function WarpTunnel({ color = '#22D3EE' }: { color?: string }) {
   const rings = useMemo(() => {
     const arr: THREE.Mesh[] = []
     const geo = new THREE.TorusGeometry(6, 0.05, 8, 64)
-    for (let i = 0; i < 24; i++) {
-      const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.3 })
+    for (let i = 0; i < 26; i++) {
+      const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.25 })
       const mesh = new THREE.Mesh(geo, mat)
       mesh.rotation.x = Math.PI / 2
       mesh.position.z = -i * 3
@@ -18,15 +18,14 @@ export function WarpTunnel({ color = '#22D3EE' }: { color?: string }) {
     }
     return arr
   }, [color])
-
   const speed = useStore(s => s.speed)
 
   useFrame((_, dt) => {
     const intensity = normalizeSpeedForVisuals(speed)
-    rings.forEach((r, i) => {
-      r.position.z += (10 + intensity * 80) * dt
-      if (r.position.z > 2) r.position.z = -72
-      ;(r.material as THREE.MeshBasicMaterial).opacity = 0.15 + 0.5 * intensity
+    rings.forEach(r => {
+      r.position.z += (12 + intensity * 90) * dt
+      if (r.position.z > 2) r.position.z = -78
+      ;(r.material as THREE.MeshBasicMaterial).opacity = 0.15 + 0.55 * intensity
     })
   })
 

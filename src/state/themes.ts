@@ -1,8 +1,7 @@
 import type { ThemePreset } from './store'
 
 /**
- * Expanded collection of visually distinct, performance‑aware presets.
- * Each pattern intentionally pushes a different "retro-future automotive" aesthetic.
+ * Revised presets with safe colors (no 8-digit hex); opacity separated.
  */
 export const presets: ThemePreset[] = [
   {
@@ -35,16 +34,17 @@ export const presets: ThemePreset[] = [
       lensflare: true,
       background: 'grid',
       primaryShader: 'chrome',
-      gridColor: '#FFDD0022',
+      gridColor: '#FFDD00',    // pure hex only
+      gridOpacity: 0.13,
       environmentPreset: 'sunset'
-    },
+    } as any,
     dsp: { ambienceGain: 0.06, lowpassHz: 12000 },
     tags: ['brand', 'chrome']
   },
   {
     id: 'night-drive',
     name: 'Night Drive',
-    description: 'Deep purple horizon with teal edge bloom.',
+    description: 'Purple horizon wireframe warp tunnel.',
     ui: { primary: '#7C3AED', accent: '#22D3EE', glow: '#22D3EE', bg: '#05070A' },
     visuals: {
       particles: 6000,
@@ -62,7 +62,7 @@ export const presets: ThemePreset[] = [
   {
     id: 'aurora-drive',
     name: 'Aurora Drive',
-    description: 'Polar greens & spectral purples drifting like curtains.',
+    description: 'Spectral teal–violet hologram nebula curtains.',
     ui: { primary: '#7DFCCB', accent: '#8B5CF6', glow: '#7DFCCB', bg: '#020407' },
     visuals: {
       particles: 8000,
@@ -72,7 +72,8 @@ export const presets: ThemePreset[] = [
       background: 'nebula',
       primaryShader: 'hologram',
       nebulaColors: ['#7DFCCB', '#8B5CF6', '#3B82F6', '#EC4899'],
-      hologramScanColor: '#7DFCCB'
+      hologramScanColor: '#7DFCCB',
+      environmentPreset: 'forest'
     },
     dsp: { ambienceGain: 0.1, lowpassHz: 13000 },
     tags: ['aurora', 'hologram']
@@ -80,7 +81,7 @@ export const presets: ThemePreset[] = [
   {
     id: 'vapor-synth',
     name: 'Vapor Synth',
-    description: 'Vaporwave grid + sunset fades + slow scan hologram.',
+    description: 'Vaporwave grid + sunset fades + soft hologram lines.',
     ui: { primary: '#FF8AD8', accent: '#FFD685', glow: '#FF8AD8', bg: '#19081F' },
     visuals: {
       particles: 3500,
@@ -89,16 +90,18 @@ export const presets: ThemePreset[] = [
       lensflare: true,
       background: 'grid',
       primaryShader: 'hologram',
-      gridColor: '#FF8AD820',
-      hologramScanColor: '#FFD685'
-    },
+      gridColor: '#FF8AD8',
+      gridOpacity: 0.12,
+      hologramScanColor: '#FFD685',
+      environmentPreset: 'dawn'
+    } as any,
     dsp: { ambienceGain: 0.07, lowpassHz: 14000 },
     tags: ['vapor', 'retro']
   },
   {
     id: 'sunset-nebula',
     name: 'Sunset Nebula',
-    description: 'Orange→pink particulate bloom, drifting gas field.',
+    description: 'Orange→pink particulate bloom, drifting cloud field.',
     ui: { primary: '#FF9D47', accent: '#FF5EA8', glow: '#FF5EA8', bg: '#12060A' },
     visuals: {
       particles: 9000,
@@ -107,7 +110,8 @@ export const presets: ThemePreset[] = [
       lensflare: true,
       background: 'nebula',
       primaryShader: 'chrome',
-      nebulaColors: ['#FF9D47', '#FF5EA8', '#FFA34F', '#FF2F67']
+      nebulaColors: ['#FF9D47', '#FF5EA8', '#FFA34F', '#FF2F67'],
+      environmentPreset: 'sunset'
     },
     dsp: { ambienceGain: 0.11, lowpassHz: 11500 },
     tags: ['sunset', 'nebula']
@@ -115,7 +119,7 @@ export const presets: ThemePreset[] = [
   {
     id: 'bio-lumina',
     name: 'Bio Lumina',
-    description: 'Deep abyssal teal + lime bio-luminescent pulses.',
+    description: 'Abyssal teal + lime bio-luminescent warp pulses.',
     ui: { primary: '#5CFFC4', accent: '#B3FF3F', glow: '#5CFFC4', bg: '#031619' },
     visuals: {
       particles: 7000,
@@ -124,7 +128,8 @@ export const presets: ThemePreset[] = [
       lensflare: false,
       background: 'warp',
       primaryShader: 'wire',
-      warpColor: '#5CFFC4'
+      warpColor: '#5CFFC4',
+      environmentPreset: 'night'
     },
     dsp: { ambienceGain: 0.09, lowpassHz: 9000 },
     tags: ['organic', 'abyss']
@@ -132,7 +137,7 @@ export const presets: ThemePreset[] = [
   {
     id: 'mono-wire',
     name: 'Mono Wire',
-    description: 'Hi-contrast grayscale wireframe minimal pack.',
+    description: 'Hi‑contrast grayscale wireframe minimal pack.',
     ui: { primary: '#FFFFFF', accent: '#AAAAAA', glow: '#FFFFFF', bg: '#050505' },
     visuals: {
       particles: 1800,
@@ -141,8 +146,10 @@ export const presets: ThemePreset[] = [
       lensflare: false,
       background: 'grid',
       primaryShader: 'wire',
-      gridColor: '#FFFFFF10'
-    },
+      gridColor: '#FFFFFF',
+      gridOpacity: 0.10,
+      environmentPreset: 'studio'
+    } as any,
     dsp: { ambienceGain: 0.05, lowpassHz: 8000 },
     tags: ['minimal', 'wire']
   },
@@ -158,7 +165,8 @@ export const presets: ThemePreset[] = [
       lensflare: true,
       background: 'stars',
       primaryShader: 'hologram',
-      hologramScanColor: '#FFCF3F'
+      hologramScanColor: '#FFCF3F',
+      environmentPreset: 'night'
     },
     dsp: { ambienceGain: 0.12, lowpassHz: 15000 },
     tags: ['energy', 'pulse']

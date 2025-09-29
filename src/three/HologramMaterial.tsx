@@ -3,7 +3,6 @@ import React, { useMemo } from 'react'
 import { extend, useFrame } from '@react-three/fiber'
 
 class HologramShaderMaterial extends THREE.ShaderMaterial {
-  time = 0
   constructor() {
     super({
       transparent: true,
@@ -14,10 +13,8 @@ class HologramShaderMaterial extends THREE.ShaderMaterial {
       },
       vertexShader: `
         varying vec3 vPos;
-        varying vec2 vUv2;
         void main(){
           vPos = position;
-          vUv2 = uv;
           gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
         }
       `,
@@ -26,24 +23,22 @@ class HologramShaderMaterial extends THREE.ShaderMaterial {
         uniform vec3 uBase;
         uniform vec3 uScan;
         varying vec3 vPos;
-        varying vec2 vUv2;
         float hash(vec2 p){ return fract(sin(dot(p, vec2(23.43,54.123)))*32423.123); }
         void main(){
           float scan = sin((vPos.y + uTime*4.0)*8.0)*0.5+0.5;
-          float flick = step(0.96, hash(vec2(floor(vPos.x*5.0), floor((vPos.y+uTime)*30.0))));
-          float grid = step(0.94, sin((vPos.x + uTime*0.5)*12.0))*0.2;
+          float flick = step(0.965, hash(vec2(floor(vPos.x*6.0), floor((vPos.y+uTime)*32.0))));
+          float grid = step(0.94, sin((vPos.x + uTime*0.5)*14.0))*0.25;
           vec3 col = uBase + scan * uScan * 0.9 + grid;
           col += flick * 0.5;
-          float alpha = 0.75 + scan*0.25;
+          float alpha = 0.70 + scan*0.25;
           gl_FragColor = vec4(col, alpha);
         }
       `
     })
   }
-  onBeforeCompile() {}
 }
-
 extend({ HologramShaderMaterial })
+
 export function useHologramMaterial(base: string, scan: string) {
   const mat = useMemo(() => new HologramShaderMaterial(), [])
   useFrame((_, dt) => {
