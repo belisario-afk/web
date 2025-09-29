@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useStore } from '../../state/store'
 import { Toggle } from '../UI/Toggle'
 import { FullscreenButton } from '../UI/FullscreenButton'
+import { useMicEnergy } from '../../hooks/useMicEnergy'
 
 export default function SettingsPanel() {
   const fullscreenAuto = useStore(s => s.fullscreenAuto)
@@ -25,9 +26,22 @@ export default function SettingsPanel() {
   const blendInterval = useStore(s => s.screensaverBlendIntervalMs)
   const setBlendInterval = useStore(s => s.setScreensaverBlendIntervalMs)
 
+  const micReactive = useStore(s => s.micReactive)
+  const setMicReactive = useStore(s => s.setMicReactive)
+  const batShadows = useStore(s => s.batShadows)
+  const setBatShadows = useStore(s => s.setBatShadows)
+  const lodNear = useStore(s => s.lodNear)
+  const setLodNear = useStore(s => s.setLodNear)
+  const lodFar = useStore(s => s.lodFar)
+  const setLodFar = useStore(s => s.setLodFar)
+
+  const { requestPermission, micPermission } = useMicEnergy()
+
   const [timeoutInput, setTimeoutInput] = useState(Math.round(timeoutMs / 1000))
   const [cycleInput, setCycleInput] = useState(Math.round(cycleMs / 1000))
   const [blendInput, setBlendInput] = useState(Math.round(blendInterval / 1000))
+  const [lodNearInput, setLodNearInput] = useState(lodNear)
+  const [lodFarInput, setLodFarInput] = useState(lodFar)
 
   return (
     <div className="text-white grid sm-tablet:grid-cols-2 gap-8">
@@ -95,7 +109,7 @@ export default function SettingsPanel() {
             />
             <div className="flex items-center gap-2">
               <Toggle checked={blendEnabled} onCheckedChange={setBlendEnabled} label="Blend" />
-              <span className="text-white/60 text-xs">Theme blending</span>
+              <span className="text-white/60 text-xs">Blend themes</span>
             </div>
           </div>
           <div className="flex gap-3">
@@ -115,15 +129,64 @@ export default function SettingsPanel() {
             </button>
           </div>
           <p className="text-white/40 text-xs mt-2">
-            Tap or keypress exits. Press ‘S’ to toggle. Modes auto‑cycle.
+            Tap or key exits; ‘S’ toggles. Modes auto-cycle.
           </p>
         </div>
       </div>
+
       <div>
-        <h3 className="text-2xl font-bold" style={{ color: theme.ui.primary }}>About</h3>
-        <div className="mt-4 text-white/70 text-sm">
-          Screensaver: Large rotating emblem, music‑reactive bat swarm, themed clock, battery gauge, route map.
-          Theme blending cycles through presets without changing your saved selection.
+        <h3 className="text-2xl font-bold" style={{ color: theme.ui.primary }}>Bats & Audio Reactivity</h3>
+        <div className="mt-4 flex items-center gap-3">
+          <Toggle checked={micReactive} onCheckedChange={setMicReactive} label="Mic reactive" />
+          <span className="text-white/70 text-sm">
+            {micPermission === 'granted' ? 'Microphone active' :
+             micPermission === 'denied' ? 'Permission denied' : 'Permission pending'}
+          </span>
+          <button
+            onClick={requestPermission}
+            disabled={!micReactive || micPermission === 'granted'}
+            className="px-3 py-2 rounded-md bg-white/10 hover:bg-white/20 border border-white/25 text-xs"
+          >
+            {micPermission === 'granted' ? 'Granted' : 'Grant Mic Access'}
+          </button>
+        </div>
+        <div className="mt-4 flex items-center gap-3">
+          <Toggle checked={batShadows} onCheckedChange={setBatShadows} label="Bat Shadows" />
+          <span className="text-white/70 text-sm">Directional shadow (heavier)</span>
+        </div>
+        <div className="mt-6">
+          <h4 className="text-white/80 text-sm font-semibold mb-2">LOD (Wing Deformation Fade)</h4>
+          <div className="flex items-center gap-2 mb-2">
+            <label className="text-white/50 w-20 text-xs">Near</label>
+            <input
+              type="number"
+              className="w-24 px-2 py-1 rounded bg-white/10 border border-white/20 text-white text-xs"
+              value={lodNearInput}
+              onChange={(e) => {
+                const v = parseFloat(e.target.value || '0')
+                setLodNearInput(v)
+                setLodNear(v)
+              }}
+            />
+            <label className="text-white/50 w-20 text-xs">Far</label>
+            <input
+              type="number"
+              className="w-24 px-2 py-1 rounded bg-white/10 border border-white/20 text-white text-xs"
+              value={lodFarInput}
+              onChange={(e) => {
+                const v = parseFloat(e.target.value || '0')
+                setLodFarInput(v)
+                setLodFar(v)
+              }}
+            />
+          </div>
+          <p className="text-white/40 text-xs">
+            Beyond Far distance, wings mostly still (saves GPU).
+          </p>
+        </div>
+        <div className="mt-6 text-white/60 text-xs leading-relaxed">
+          Energy source priority: Microphone (if enabled & granted) → Playback heuristic.
+          Per-instance tint adds subtle color variance. Shadows may reduce FPS.
         </div>
       </div>
     </div>

@@ -3,32 +3,23 @@ import { presets } from './themes'
 
 export type Panel = 'now' | 'geo' | 'themes' | 'settings'
 export type ThemePreset = typeof presets[number]
-
-/** Screensaver overlay modes */
 export type ScreensaverMode = 'logo' | 'clock' | 'battery' | 'route'
 
 interface State {
   panel: Panel
   setPanel: (p: Panel) => void
-
   theme: ThemePreset
   setTheme: (t: ThemePreset) => void
-
   speed: number
   setSpeed: (v: number) => void
-
   fullscreenAuto: boolean
   setFullscreenAuto: (v: boolean) => void
-
   carDock: boolean
   setCarDock: (v: boolean) => void
-
   brightnessSuggestion: 'normal' | 'dim' | 'dark'
   setBrightnessSuggestion: (v: State['brightnessSuggestion']) => void
-
   dspEnabled: boolean
   setDspEnabled: (v: boolean) => void
-
   volume: number
   setVolume: (v: number) => void
   lastVolumeChangeAt: number
@@ -42,49 +33,58 @@ interface State {
   lastInteractionAt: number
   markInteraction: () => void
 
-  // Screensaver modes
+  // Screensaver modes & cycling
   screensaverMode: ScreensaverMode
   setScreensaverMode: (m: ScreensaverMode) => void
   screensaverAutoCycleMs: number
   setScreensaverAutoCycleMs: (ms: number) => void
 
-  // Theme blending while screensaver active
+  // Theme blending
   screensaverBlendEnabled: boolean
   setScreensaverBlendEnabled: (v: boolean) => void
   screensaverBlendIntervalMs: number
   setScreensaverBlendIntervalMs: (ms: number) => void
-  _originalThemeId: string | null        // internal
+  _originalThemeId: string | null
   _blendedThemeOverride: ThemePreset | null
   setBlendedThemeOverride: (t: ThemePreset | null) => void
 
-  // Route tracking (geo path)
+  // Route
   routePositions: { x: number; y: number }[]
   pushRoutePoint: (x: number, y: number) => void
   clearRoute: () => void
+
+  // Mic reactivity
+  micReactive: boolean
+  setMicReactive: (v: boolean) => void
+  micPermission: 'unknown' | 'granted' | 'denied'
+  setMicPermission: (p: State['micPermission']) => void
+
+  // Shadows toggle for bats
+  batShadows: boolean
+  setBatShadows: (v: boolean) => void
+
+  // LOD parameters
+  lodNear: number
+  setLodNear: (v: number) => void
+  lodFar: number
+  setLodFar: (v: number) => void
 }
 
 export const useStore = create<State>((set, get) => ({
   panel: 'now',
   setPanel: (p) => set({ panel: p }),
-
   theme: presets[0],
   setTheme: (t) => set({ theme: t }),
-
   speed: 0,
   setSpeed: (v) => set({ speed: v }),
-
   fullscreenAuto: true,
   setFullscreenAuto: (v) => set({ fullscreenAuto: v }),
-
   carDock: false,
   setCarDock: (v) => set({ carDock: v }),
-
   brightnessSuggestion: 'normal',
   setBrightnessSuggestion: (v) => set({ brightnessSuggestion: v }),
-
   dspEnabled: false,
   setDspEnabled: (v) => set({ dspEnabled: v }),
-
   volume: 0.6,
   setVolume: (v) => set({ volume: Math.max(0, Math.min(1, v)) }),
   lastVolumeChangeAt: 0,
@@ -94,21 +94,17 @@ export const useStore = create<State>((set, get) => ({
   setScreensaverActive: (v) => {
     const st = get()
     if (v) {
-      // save original theme id if first activation
       if (!st._originalThemeId) set({ _originalThemeId: st.theme.id })
     } else {
-      // restore original theme if we were blending
       if (st._originalThemeId) {
         const orig = presets.find(p => p.id === st._originalThemeId)
         if (orig) set({ theme: orig })
       }
       set({ _blendedThemeOverride: null, _originalThemeId: null })
     }
-    // reset interaction timestamp when leaving
     if (!v) set({ lastInteractionAt: Date.now() })
     set({ screensaverActive: v })
   },
-
   screensaverTimeoutMs: 60000,
   setScreensaverTimeoutMs: (ms) => set({ screensaverTimeoutMs: Math.max(5000, ms) }),
   lastInteractionAt: Date.now(),
@@ -136,5 +132,18 @@ export const useStore = create<State>((set, get) => ({
     if (arr.length > 400) arr.splice(0, arr.length - 400)
     set({ routePositions: [...arr] })
   },
-  clearRoute: () => set({ routePositions: [] })
+  clearRoute: () => set({ routePositions: [] }),
+
+  micReactive: false,
+  setMicReactive: (v) => set({ micReactive: v }),
+  micPermission: 'unknown',
+  setMicPermission: (p) => set({ micPermission: p }),
+
+  batShadows: false,
+  setBatShadows: (v) => set({ batShadows: v }),
+
+  lodNear: 10,
+  setLodNear: (v) => set({ lodNear: Math.max(1, v) }),
+  lodFar: 55,
+  setLodFar: (v) => set({ lodFar: Math.max(5, v) })
 }))
