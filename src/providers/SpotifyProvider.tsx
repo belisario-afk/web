@@ -17,14 +17,13 @@ type Ctx = {
   audioActivated: boolean
   activateAudio: () => Promise<void>
 
-  // controls
   togglePlay: () => Promise<void>
   next: () => Promise<void>
   previous: () => Promise<void>
   setVolume: (v: number) => Promise<void>
   getVolume?: () => Promise<number>
-
   transferPlayback: (opts?: { play?: boolean }) => Promise<void>
+
   playTrack: (uri: string) => Promise<void>
   queueTrack: (uri: string) => Promise<void>
 }
@@ -32,7 +31,10 @@ type Ctx = {
 const SpotifyCtx = createContext<Ctx | null>(null)
 
 export const SpotifyProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const { token, ready: authReady, error: authError, authorize, logout } = useSpotifyAuth()
+  // tokenObj is full object returned from hook; we only pass the access_token string into player hook
+  const { token: tokenObj, ready: authReady, error: authError, authorize, logout } = useSpotifyAuth()
+  const accessToken = tokenObj?.access_token ?? null
+
   const {
     state,
     deviceId,
@@ -46,76 +48,61 @@ export const SpotifyProvider: React.FC<React.PropsWithChildren> = ({ children })
     transferPlayback,
     setVolume,
     getVolume
-  } = useSpotifyPlayer({ token: token ?? null })
+  } = useSpotifyPlayer({ token: accessToken })
 
   const transferredOnce = useRef(false)
-
   useEffect(() => {
-    if (!transferredOnce.current && playerReady && deviceId && token) {
+    if (!transferredOnce.current && playerReady && deviceId && accessToken) {
       transferredOnce.current = true
       transferPlayback({ play: false }).catch(() => {})
     }
-  }, [playerReady, deviceId, token, transferPlayback])
+  }, [playerReady, deviceId, accessToken, transferPlayback])
 
   async function playTrack(uri: string) {
-    if (!token || !deviceId) return
-    // Ensure device active
-    try {
-      const res = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${encodeURIComponent(deviceId)}`, {
+    if (!accessToken || !deviceId) return
+    const endpoint = `https://api.spotify.com/v1/me/player/play?device_id=${encodeURIComponent(deviceId)}`
+    const body = JSON.stringify({ uris: [uri] })
+    const res = await fetch(endpoint, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body
+    })
+    if (!res.ok && res.status !== 204) {
+      // Try transfer then retry once
+      await transferPlayback({ play: false }).catch(() => {})
+      const retry = await fetch(endpoint, {
         method: 'PUT',
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ uris: [uri] })
+        body
       })
-      if (!res.ok && res.status !== 204) {
-        if (res.status === 404 || res.status === 403) {
-          await transferPlayback({ play: false })
-          const retry = await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${encodeURIComponent(deviceId)}`, {
-            method: 'PUT',
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ uris: [uri] })
-          })
-          if (!retry.ok && retry.status !== 204) {
-            throw new Error(`Play failed (${retry.status})`)
-          }
-        } else {
-          throw new Error(`Play failed (${res.status})`)
-        }
+      if (!retry.ok && retry.status !== 204) {
+        throw new Error(`Play failed (${retry.status})`)
       }
-    } catch (e) {
-      // bubble up silently for now (UI stays optimistic)
-      throw e
     }
   }
 
   async function queueTrack(uri: string) {
-    if (!token || !deviceId) return
-    const res = await fetch(
-      `https://api.spotify.com/v1/me/player/queue?uri=${encodeURIComponent(uri)}&device_id=${encodeURIComponent(deviceId)}`,
-      { method: 'POST', headers: { Authorization: `Bearer ${token}` } }
-    )
+    if (!accessToken || !deviceId) return
+    const endpoint = `https://api.spotify.com/v1/me/player/queue?uri=${encodeURIComponent(uri)}&device_id=${encodeURIComponent(deviceId)}`
+    const res = await fetch(endpoint, { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` } })
     if (!res.ok) {
-      if (res.status === 404) {
-        await transferPlayback({ play: false })
-        await fetch(
-          `https://api.spotify.com/v1/me/player/queue?uri=${encodeURIComponent(uri)}&device_id=${encodeURIComponent(deviceId)}`,
-          { method: 'POST', headers: { Authorization: `Bearer ${token}` } }
-        )
-      }
+      await transferPlayback({ play: false }).catch(() => {})
+      await fetch(endpoint, { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` } })
     }
   }
 
-  const value = useMemo<Ctx>(() => ({
+  const value: Ctx = useMemo(() => ({
     authReady,
     authError,
     authorize,
     logout,
-    token: token ?? null,
+    token: accessToken,
 
     playerReady,
     playerError,
@@ -130,16 +117,15 @@ export const SpotifyProvider: React.FC<React.PropsWithChildren> = ({ children })
     previous,
     setVolume,
     getVolume,
-
     transferPlayback,
+
     playTrack,
     queueTrack
   }), [
-    authReady, authError, authorize, logout, token,
+    authReady, authError, authorize, logout, accessToken,
     playerReady, playerError, state, deviceId,
     audioActivated, activateAudio,
-    togglePlay, next, previous, setVolume, getVolume,
-    transferPlayback
+    togglePlay, next, previous, setVolume, getVolume, transferPlayback
   ])
 
   return <SpotifyCtx.Provider value={value}>{children}</SpotifyCtx.Provider>

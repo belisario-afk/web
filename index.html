@@ -2,18 +2,26 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-    <meta name="theme-color" content="#0A0F14"/>
-    <link rel="icon" href="./favicon.svg" type="image/svg+xml"/>
-    <link rel="manifest" href="./manifest.webmanifest"/>
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0A0F14" />
+    <meta name="description" content="Opel Z - 3D Spotify Dashboard for Samsung Galaxy Tab SMT77U" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="./manifest.webmanifest" />
     <title>Opel Z</title>
     <style>
-      html, body, #root { height: 100%; background: #0A0F14; }
-      body { margin: 0; overscroll-behavior: none; touch-action: manipulation; }
+      html, body, #root { height: 100%; background:#0A0F14; }
+      body { margin:0; overscroll-behavior:none; touch-action:manipulation; }
     </style>
+    <script>
+      // Avoid AnthemError if SDK loads before React registers handler.
+      window.onSpotifyWebPlaybackSDKReady = window.onSpotifyWebPlaybackSDKReady || function(){};
+    </script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="./src/main.tsx"></script> <!-- Vite rewrites this on build -->
+    <script type="module" src="./src/main.tsx"></script>
   </body>
 </html>

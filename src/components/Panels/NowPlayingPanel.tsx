@@ -15,9 +15,7 @@ export default function NowPlayingPanel() {
   } = useSpotify()
   const { volume, setVolume } = useVolume()
 
-  if (!authReady) {
-    return <div className="text-white">Initializing authentication...</div>
-  }
+  if (!authReady) return <div className="text-white">Initializing authentication...</div>
 
   if (!token) {
     return (
@@ -36,7 +34,6 @@ export default function NowPlayingPanel() {
 
   return (
     <div className="text-white flex flex-col gap-6">
-      {/* Search section */}
       <SearchTracks />
 
       <div className="grid grid-cols-[auto_1fr_auto] gap-6 items-start">
@@ -51,7 +48,7 @@ export default function NowPlayingPanel() {
           </h3>
           <p className="text-white/70 truncate">{track?.artists.map(a => a.name).join(', ')}</p>
 
-          <div className="mt-4 flex items-center gap-4 flex-wrap">
+            <div className="mt-4 flex items-center gap-4 flex-wrap">
             <Button variant="ghost" onClick={previous} disabled={!playerReady}>Prev</Button>
             <Button
               variant="primary"

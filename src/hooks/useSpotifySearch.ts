@@ -18,9 +18,6 @@ interface UseSpotifySearchResult {
   clear: () => void
 }
 
-/**
- * Debounced Spotify track search.
- */
 export function useSpotifySearch(debounceMs = 400): UseSpotifySearchResult {
   const { token } = useSpotify()
   const [query, setQuery] = useState('')
@@ -31,13 +28,15 @@ export function useSpotifySearch(debounceMs = 400): UseSpotifySearchResult {
   const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
-    if (!token) {
-      setResults([])
-      return
-    }
     if (timerRef.current) window.clearTimeout(timerRef.current)
     if (abortRef.current) abortRef.current.abort()
 
+    if (!token) {
+      setResults([])
+      setLoading(false)
+      setError(null)
+      return
+    }
     if (!query || query.trim().length < 2) {
       setResults([])
       setLoading(false)
@@ -59,16 +58,19 @@ export function useSpotifySearch(debounceMs = 400): UseSpotifySearchResult {
           signal: abortRef.current.signal
         })
         if (!res.ok) {
+          if (res.status === 401) {
+            throw new Error('Unauthorized (token expired or missing scope)')
+          }
           throw new Error(`Search failed (${res.status})`)
         }
         const json = await res.json()
         const tracks = (json.tracks?.items || []) as any[]
         const mapped: SimpleTrack[] = tracks.map(t => ({
           uri: t.uri,
-            name: t.name,
-            artists: t.artists.map((a: any) => a.name).join(', '),
-            albumArt: t.album?.images?.[2]?.url || t.album?.images?.[1]?.url || t.album?.images?.[0]?.url || null,
-            durationMs: t.duration_ms
+          name: t.name,
+          artists: t.artists.map((a: any) => a.name).join(', '),
+          albumArt: t.album?.images?.[2]?.url || t.album?.images?.[1]?.url || t.album?.images?.[0]?.url || null,
+          durationMs: t.duration_ms
         }))
         setResults(mapped)
       } catch (e: any) {

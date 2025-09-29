@@ -2,19 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
-    <meta name="theme-color" content="#0A0F14"/>
-    <link rel="icon" href="./favicon.svg" type="image/svg+xml"/>
-    <link rel="manifest" href="./manifest.webmanifest"/>
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0A0F14" />
+    <meta name="description" content="Opel Z - 3D Spotify Dashboard for Samsung Galaxy Tab SMT77U" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="./manifest.webmanifest" />
     <title>Opel Z</title>
     <style>
-      html, body, #root { height: 100%; background: #0A0F14; }
-      body { margin: 0; overscroll-behavior: none; touch-action: manipulation; }
+      html, body, #root { height: 100%; background:#0A0F14; }
+      body { margin:0; overscroll-behavior:none; touch-action:manipulation; }
     </style>
-    <script type="module" crossorigin src="/web/assets/index-Atk5VuJa.js"></script>
+    <script>
+      // Avoid AnthemError if SDK loads before React registers handler.
+      window.onSpotifyWebPlaybackSDKReady = window.onSpotifyWebPlaybackSDKReady || function(){};
+    </script>
+    <script type="module" crossorigin src="/web/assets/index-Cyp2wGw6.js"></script>
     <link rel="stylesheet" crossorigin href="/web/assets/index-767ILjNw.css">
   <link rel="manifest" href="/web/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/web/registerSW.js"></script></head>
   <body>
-    <div id="root"></div> <!-- Vite rewrites this on build -->
+    <div id="root"></div>
   </body>
 </html>

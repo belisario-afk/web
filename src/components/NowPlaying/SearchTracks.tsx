@@ -19,10 +19,9 @@ export const SearchTracks: React.FC = () => {
         await transferPlayback({ play: false })
       }
       await playTrack(uri)
-      // Success – clear list to reduce clutter
       clear()
-    } catch (e) {
-      // leave results so user can retry
+    } catch {
+      // keep results so user can retry
     } finally {
       setPlayingUri(null)
     }
@@ -35,16 +34,16 @@ export const SearchTracks: React.FC = () => {
           <label className="block text-sm font-medium text-white/70 mb-1">
             Search Tracks
           </label>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Type at least 2 characters..."
-              className="w-full px-5 py-4 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/40 text-lg focus:outline-none focus:ring-2 focus:ring-opel-neon/60"
-              type="text"
-              inputMode="search"
-              autoCorrect="off"
-              spellCheck={false}
-            />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Type at least 2 characters..."
+            className="w-full px-5 py-4 rounded-xl bg-white/10 border border-white/15 text-white placeholder-white/40 text-lg focus:outline-none focus:ring-2 focus:ring-opel-neon/60"
+            type="text"
+            inputMode="search"
+            autoCorrect="off"
+            spellCheck={false}
+          />
         </div>
         {query && (
           <Button
@@ -58,12 +57,8 @@ export const SearchTracks: React.FC = () => {
       </div>
       {(loading || error || results.length > 0) && (
         <div className="mt-4 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl max-h-[360px] overflow-auto p-2">
-          {loading && (
-            <div className="p-4 text-white/60 text-sm">Searching...</div>
-          )}
-          {error && !loading && (
-            <div className="p-4 text-red-400 text-sm">Error: {error}</div>
-          )}
+          {loading && <div className="p-4 text-white/60 text-sm">Searching...</div>}
+          {error && !loading && <div className="p-4 text-red-400 text-sm">Error: {error}</div>}
           {!loading && !error && results.length === 0 && query.length >= 2 && (
             <div className="p-4 text-white/50 text-sm">No results.</div>
           )}
@@ -102,7 +97,7 @@ export const SearchTracks: React.FC = () => {
         </div>
       )}
       <p className="text-white/40 text-xs mt-2">
-        Tap a result to start playback immediately. Uses Spotify’s /search and /me/player/play endpoints.
+        Tap a result to play instantly (device transfer handled automatically).
       </p>
     </div>
   )
