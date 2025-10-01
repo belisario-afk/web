@@ -3,6 +3,11 @@ import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 import { useStore } from '../../state/store'
 
+/**
+ * Central rotating emblem.
+ * Attempts to load optional /web/screensaver/bat-opel.webp or .png.
+ * Falls back to a procedurally drawn vector emblem if not present.
+ */
 export const ScreensaverLogo: React.FC = () => {
   const theme = useStore(s => s.theme)
   const meshRef = useRef<THREE.Mesh>(null)
@@ -18,23 +23,31 @@ export const ScreensaverLogo: React.FC = () => {
       const ctx = c.getContext('2d')!
       ctx.fillStyle = '#000'
       ctx.fillRect(0,0,size,size)
-      ctx.fillStyle = '#222'
+      ctx.fillStyle = '#1d1d1d'
+      // Stylized bat-like plate
       ctx.beginPath()
       ctx.moveTo(20,180)
       ctx.quadraticCurveTo(64,40,128,90)
       ctx.quadraticCurveTo(192,40,236,180)
-      ctx.lineTo(200,150)
-      ctx.quadraticCurveTo(128,210,56,150)
+      ctx.lineTo(205,150)
+      ctx.quadraticCurveTo(128,212,51,150)
       ctx.closePath()
       ctx.fill()
-      ctx.strokeStyle = '#777'
+      ctx.strokeStyle = '#6f6f6f'
       ctx.lineWidth = 5
       ctx.stroke()
+      // Inner ring
+      ctx.strokeStyle = '#999'
+      ctx.lineWidth = 8
+      ctx.beginPath()
+      ctx.arc(size/2, size/2, 72, 0, Math.PI*2)
+      ctx.stroke()
+      // Center Z
       ctx.font = 'bold 110px system-ui'
       ctx.textAlign='center'
       ctx.textBaseline='middle'
-      ctx.fillStyle = '#FFDD00'
-      ctx.fillText('Z', size/2, size/2+8)
+      ctx.fillStyle = theme.ui ? theme.ui.primary : '#FFDD00'
+      ctx.fillText('Z', size/2, size/2+6)
       const tex = new THREE.CanvasTexture(c)
       tex.colorSpace = THREE.SRGBColorSpace
       return tex
@@ -65,9 +78,10 @@ export const ScreensaverLogo: React.FC = () => {
         void main(){
           vec4 c = texture2D(uTex, vUv);
           if(c.a < 0.05) discard;
-          float pulse = 0.5 + 0.5*sin(uTime*1.25);
-          vec3 col = c.rgb + uGlow * (0.20 + 0.35*pulse);
-          col = mix(col, uPrimary, 0.12 + 0.05*pulse);
+          float pulse = 0.5 + 0.5*sin(uTime*1.2);
+          vec3 col = c.rgb;
+          col += uGlow * (0.25 + 0.35*pulse);
+          col = mix(col, uPrimary, 0.10 + 0.10*pulse);
           gl_FragColor = vec4(col, c.a);
         }
       `
@@ -96,14 +110,14 @@ export const ScreensaverLogo: React.FC = () => {
     material.uniforms.uTime.value += dt
     if (meshRef.current) {
       meshRef.current.rotation.y += dt * 0.18
-      meshRef.current.rotation.x = Math.sin(performance.now()*0.0002)*0.12
+      meshRef.current.rotation.x = Math.sin(performance.now()*0.00018)*0.11
     }
   })
 
   return (
     <mesh ref={meshRef} position={[0,0.6,0]}>
       <planeGeometry args={[18,8]} />
-      <primitive object={material} attach="material" />
+      <primitive attach="material" object={material} />
     </mesh>
   )
 }
